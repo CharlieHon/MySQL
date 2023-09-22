@@ -300,7 +300,7 @@ TRUNCATE TABLE 表名;
 
 > 注意：在删除表时，表中的全部数据也会被删除。
 
-##### 总结
+**总结**
 
 1. DDL-数据库操作
 
@@ -324,14 +324,9 @@ DROP TABLE 表名;	-- 删除表
 TRUNCATE TABLE 表名;	-- 删除表内容
 ```
 
-#### MySQL图形化界面
-
-| Sqlyog | Navicat | DataGrip |
-| ------ | ------- | -------- |
-
 #### DML
 
-**DML-介绍**
+##### DML-介绍
 
 DML英文全称是 `Data Manipulation Language(数据操作语言)`，用来对数据库中的数据记录进行增删改操作。
 
@@ -339,7 +334,7 @@ DML英文全称是 `Data Manipulation Language(数据操作语言)`，用来对�
 - 修改数据(`UPDATE`)
 - 删除数据(`DELETE`)
 
-**DML-插入数据**
+##### DML-插入数据
 
 1. 给指定字段添加数据
 
@@ -378,7 +373,7 @@ insert into employee values (3, 3, '王五', '男', 30, 110415197811047421, '202
                             (4, 4, '李自成', '男', 42, 100132157305073066, '2023-09-01');
 ```
 
-**DML-修改数据**
+##### DML-修改数据
 
 ```sql
 UPDATE 表名 SET 字段名1=值1, 字段名2=值2, ...[WHERE 条件];
@@ -395,7 +390,7 @@ UPDATE employee SET name = '小昭', gender = '女' WHERE id = 1;
 UPDATE employee SET entryData = '2008-01-01';
 ```
 
-**DML-删除数据**
+##### DML-删除数据
 
 ```sql
 DELETE FROM 表名 [WHERE 条件];
@@ -440,13 +435,13 @@ DELETE FROM 表名 [WHERE 条件];
 
 #### DQL
 
-**DQL-介绍**
+##### DQL-介绍
 
 DQL英文全称为 `Data Query Language(数据查询语言)`，用来查询数据库中表的记录。
 
 查询关键字：`SELECT`
 
-**DQL-语法**
+##### DQL-语法
 
 ```sql
 SELECT 
@@ -465,7 +460,7 @@ LIMIT
 	分页参数
 ```
 
-**DQL-基本查询**
+##### DQL-基本查询
 
 1. 查询多个字段
 
@@ -510,7 +505,7 @@ SELECT DISTINCT workaddress '工作地点' FROM emp;
 
 ```
 
-**DQL-条件查询**
+##### DQL-条件查询
 
 1. 语法
 
@@ -578,7 +573,7 @@ select * from employee where idCard like '%X';  -- % 匹配任意个字符
 select * from employee where idCard like '_________________X';
 ```
 
-**SQL-聚合函数**
+##### SQL-聚合函数
 
 > 注意：`null`值不参与所有聚合函数运算
 
@@ -622,7 +617,7 @@ select min(age) from employee;  -- 12
 select min(age) from employee where workaddress = '成都'; -- 12
 ```
 
-**DQL-分组查询**
+##### DQL-分组查询
 
 1. 语法
 
@@ -653,7 +648,7 @@ select workaddress, count(*) from employee where age < 45 group by workaddress h
 
 ```
 
-**DQL-排序查询**
+##### DQL-排序查询
 
 1. 语法
 
@@ -680,7 +675,7 @@ select * from employee order by entryData desc;
 select * from employee order by age , entryData desc;
 ```
 
-**DQL-分页查询**
+##### DQL-分页查询
 
 1. 语法
 
@@ -714,9 +709,10 @@ select name, age from employee where age <= 35 order by age asc, entryData desc;
 select * from employee where gender = '男' and age between 20 and 40 order by age, entryData desc limit 5;
 ```
 
-**DQL-执行顺序**
+##### DQL-执行顺序
 
 ```mysql
+-- 编写顺序
 SELECT
 	字段名
 FROM
@@ -731,6 +727,131 @@ ORDER BY
 	排序字段列表
 LIMIT
 	分页参数
+```
+
+![编写顺序和执行顺序](image/1695379109107.png)
+
+![DQL语句](image/1695379617211.png)
+
+#### DCL
+
+##### DCL-介绍
+
+- DCL英文全称是Data Control Language(数据控制语言)，用来**管理数据库用户、控制数据库的访问权限**。
+
+##### DCL-管理用户
+
+1. 查询用户
+
+```MYSQL
+USE mysql;
+SELECT * FROM user;
+```
+
+2. 创建用户
+
+```sql
+CREATE USER '用户名'@'主机名' IDENTIFIED BY '密码';
+```
+
+3. 修改用户密码
+
+```sql
+ALTER USER '用户名'@'主机名' IDENTIFIED WITH mysql_native_password BY '新密码';
+```
+
+4. 删除用户
+
+```sql
+DROP USER '用户名'@'主机名';
+```
+
+```sql
+-- DCL-管理用户
+-- 1.创建用户 itcast，只能在当前主机 localhost 访问，密码123456
+create user 'itcast'@'localhost' identified by '123456';
+
+-- 2.创建用户 heima，可以在任意主机访问该数据库，密码123456
+create user 'heima'@'%' identified by '123456';
+
+-- 3.修改用户 heima 的访问密码 1234
+alter user 'heima'@'%' identified with mysql_native_password by '1234';
+
+-- 4.删除 itcast@localhost 用户
+drop user 'itcast'@'localhost';
+```
+
+> 注意：
+>
+> - 主机名可以使用 `%`通配符
+> - 这类 `SQL`开发人员操作的比较少，主要是 `DBA`(Database Administrator 数据库管理员)使用
+
+##### DCL-权限控制
+
+MySQL中定义了很多权限，但是常用的就以下几种：
+
+| 权限                        | 说明               |
+| --------------------------- | ------------------ |
+| `ALL`, `ALL PRIVILEGES` | 所有权限           |
+| `SELECT`                  | 查询数据           |
+| `INSERT`                  | 插入数据           |
+| `UPDATE`                  | 修改数据           |
+| `DELETE`                  | 删除数据           |
+| `ALTER`                   | 修改表             |
+| `DROP`                    | 删除数据库/表/视图 |
+| `CREATE`                  | 创建数据库/表      |
+
+1. 查询权限
+
+```sql
+SHOW GRANTS FOR '用户名'@'主机名';
+```
+
+2. 授予权限
+
+```sql
+GRANT 权限列表 ON 数据库名.表名 TO '用户名'@'主机名';
+```
+
+5. 撤销权限
+
+```sql
+REVOKE 权限列表 ON 数据库名.表名 FROM '用户名'@'主机名';
+```
+
+> 注意：
+>
+> - 多个权限之间，使用逗号分隔
+> - 授权时，数据库名和表名可以使用 `*` 进行通配，代表所有数据库/表
+
+```sql
+-- DCL-权限控制
+-- 1.查询权限
+show grants for 'heima'@'%';
+
+-- 2.授予权限
+grant all on test.* to 'heima'@'%';
+
+-- 3.撤销权限
+revoke all on test.* from 'heima'@'%';
+```
+
+**总结**
+
+1. 用户管理
+
+```sql
+CREATE USER '用户名'@'主机名' IDENTIFIED BY 密码;
+ALTER USER '用户名'@'主机名' IDENTIFIED WITH mysql_native_password BY 密码;
+DROP USER '用户名'@'主机名';
+```
+
+2. 权限控制
+
+```sql
+SHOW GRANTS FOR '用户名'@'主机名';
+GRANT 权限列表 ON 数据库.表 TO '用户名'@'主机名';
+REVOKE 权限列表 ON 数据库.表 FROM '用户名'@'主机名';
 ```
 
 ## 进阶篇
