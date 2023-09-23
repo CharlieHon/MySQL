@@ -37,21 +37,17 @@ INSERT INTO student VALUES (10, '赵敏', '03班');
 UPDATE student SET name = '张三丰' WHERE id = 8;
 ```
 
-```csv
-id,name,class
-1,张三,01班
-2,李四,01班
-3,王五,01班
-4,赵六,01班
-5,李自成,02班
-7,皇太极,02班
-8,张三丰,03班
-9,常遇春,03班
-10,赵敏,03班
-```
+## 2. 结果展示
 
+![1695433795153](image/README/1695433795153.png)
 
-## 2. 使用C++连接数据库
+| 操作                                           | 结果                                           |
+| ---------------------------------------------- | ---------------------------------------------- |
+| ![1695433775284](image/README/1695433775284.png) | ![1695433782892](image/README/1695433782892.png) |
+| ![1695433245209](image/README/1695433245209.png) | ![1695433906916](image/README/1695433906916.png) |
+| ![img](image/README/1695433297296.png)           | ![1695433891635](image/README/1695433891635.png) |
+
+## 3. 使用C++连接数据库
 
 ```cpp
 /* StudentManager.h */
@@ -82,6 +78,7 @@ public:
 	bool updateStu(const Student&);	// 修改
 	bool deleteStu(const int&);		// 删除
 	vector<Student> selectStu(const string& = "");		// 查找
+	void showMenu();	// 显示菜单
 private:
 	MYSQL* con;
 	const char* host = "127.0.0.1";	// IP地址
@@ -180,6 +177,20 @@ vector<Student> StudentManager::selectStu(const string& condition)
 	return stuList;
 }
 
+void StudentManager::showMenu()
+{
+	cout << "***************************" << endl;
+	cout << "*****使用C++连接MySQL******" << endl;
+	cout << "****** 1.查询所有数据 *****" << endl;
+	cout << "****** 2.修改数据   *******" << endl;
+	cout << "****** 3.插入数据   *******" << endl;
+	cout << "****** 4.删除数据   *******" << endl;
+	cout << "****** 0.退出程序  *******" << endl;
+	cout << "**************************" << endl;
+	cout << endl;
+}
+
+
 ```
 
 ```cpp
@@ -188,19 +199,69 @@ vector<Student> StudentManager::selectStu(const string& condition)
 int main()
 {
 
-	Student stu1{10, "小昭", "03班"};
-	StudentManager::GetInstance()->updateStu(stu1);	// 修改指定id数据
+	// Student stu1{10, "小昭", "03班"};
+	// StudentManager::GetInstance()->updateStu(stu1);	// 修改指定id数据
 
-	Student stu2{ 11, "韩信", "04班" };
-	// StudentManager::GetInstance()->insertStu(stu2);	// 插入数据，id不能重复
+	// Student stu2{ 11, "韩信", "04班" };
+	// // StudentManager::GetInstance()->insertStu(stu2);	// 插入数据，id不能重复
 
-	StudentManager::GetInstance()->deleteStu(stu2.Id);	// 根据id，删除数据
+	// StudentManager::GetInstance()->deleteStu(stu2.Id);	// 根据id，删除数据
 
-	// 查询
-	auto res = StudentManager::GetInstance()->selectStu();
-	for (const auto& s : res) {
-		cout << "学号：" << s.Id << " 姓名：" << s.Name
-			<< " 班级：" << s.Class << endl;
+	// // 查询
+	// auto res = StudentManager::GetInstance()->selectStu();
+	// for (const auto& s : res) {
+	// 	cout << "学号：" << s.Id << " 姓名：" << s.Name
+	// 		<< " 班级：" << s.Class << endl;
+	// }
+
+	auto StuManager = StudentManager::GetInstance();
+	vector<Student> res;	// 查询结果
+	Student stu;			// 一个Student对象
+	int select = 0;
+	while (true) {
+		StuManager->showMenu();	// 显示菜单
+		cout << "请输入您的选择：";
+		cin >> select;
+		switch (select)
+		{
+		case 1:
+			res = StuManager->selectStu();	// 查询所有数据
+			for (const auto& s : res) {
+				cout << "学号：" << s.Id << " 姓名：" << s.Name
+					<< " 班级：" << s.Class << endl;
+			}
+			system("pause");
+			system("cls");
+			break;
+		case 2:
+			cout << "请输入修改数据的信息（学号，姓名，班级）：" << endl;
+			cin >> stu.Id >> stu.Name >> stu.Class;
+			StuManager->updateStu(stu);
+			system("pause");
+			system("cls");
+			break;
+		case 3:
+			cout << "请输入插入数据信息（学号不可重复）：" << endl;
+			cin >> stu.Id >> stu.Name >> stu.Class;
+			StuManager->insertStu(stu);
+			system("pause");
+			system("cls");
+			break;
+		case 4:
+			cout << "根据学号删除指定数据：" << endl;
+			int id;
+			cin >> id;
+			StuManager->deleteStu(id);
+			system("pause");
+			system("cls");
+			break;
+		case 0:
+			cout << "欢迎下次使用" << endl;
+			exit(0);
+			break;
+		default:
+			break;
+		}
 	}
 
 	return 0;
