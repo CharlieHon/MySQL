@@ -854,6 +854,496 @@ GRANT 权限列表 ON 数据库.表 TO '用户名'@'主机名';
 REVOKE 权限列表 ON 数据库.表 FROM '用户名'@'主机名';
 ```
 
+### 函数
+
+**函数**是指一段可以直接被另一段程序调用的程序或代码
+
+#### 字符串函数
+
+MySQL中内置了很多字符串函数，常用的几个如下：
+
+| 函数                           | 功能                                                      |
+| ------------------------------ | --------------------------------------------------------- |
+| `CONCAT(S1,S2,...,Sn)`       | 字符串拼接，将S1,S2,...,Sn拼接成一个字符串                |
+| `LOWER(str)`                 | 将字符串str全部转为小写                                   |
+| `UPPER(str)`                 | 将字符串str全部转为大写                                   |
+| `LPAD(str, n, pad)`          | 左填充，用字符串pad对str的左边进行填充，达到n个字符串长度 |
+| `RPAD(str, n, pad)`          | 右填充，用字符串pad对str的右边进行填充，达到n个字符串长度 |
+| `TRIM(str)`                  | 去掉字符串**头部**和**尾部**的空格            |
+| `SUBSTRING(str, start, len)` | 返回从字符串str从start位置起的len个长度的字符串           |
+
+> select 函数(参数);
+
+```MySQL
+------------ 函数演示 ---------------
+-- concat
+select concat('Hello', 'MySQL');	-- Hello MySQL
+-- lower
+select lower('Hello');	-- hello
+-- upper
+select upper('Hello');	-- HELLO
+-- lpad
+select lpad('01', 5, '-');	-- ---01	本身字符串'01'长度为2，填充3个'-'时长度为5
+-- rpad
+select rpad('01', 5, '-');	-- 01---
+-- trim
+select trim(' Hello  MySQL ');	-- 'Hello  MySQL'	加上''是为展示头尾部不存在空格
+-- substring
+select substring('Hello MySQL', 1, 5);	-- Hello 索引从1开始
+```
+
+```MySQL
+----- 练习：根据需求完成以下SQL编写 -----
+/* 由于业务需求变更，企业员工的工号，统一为5位数，目前不足5位数的全部在前面补0.比如：1号员工的工号应该为00001 */
+update emp set workNo = lpad(workNo, 5, '0');	-- 修改
+```
+
+#### 数值函数
+
+常见的数值函数如下：
+
+| 函数            | 功能                               |
+| --------------- | ---------------------------------- |
+| `CEIL(x)`     | 向上取整                           |
+| `FLOOR(x)`    | 向下取整                           |
+| `MOD(x, y)`   | 返回 `x/y`的模                   |
+| `RAND()`      | 返回 `0~1`内的随机数             |
+| `ROUND(x, y)` | 求参数x的四舍五入的值，保留y位小数 |
+
+```MySQL
+----- 数值函数 -----
+-- ceil
+select ceil(1.1);	-- 2
+-- floor
+select floor(1.9);	-- 1
+-- mod
+select mod(10, 3);	-- 1
+-- rand
+select rand();		-- 0.132654545
+-- round
+select round(2.344, 2);	-- 2.34
+```
+
+```MySQL
+--- 通过数据库的函数，生成一个六位数的随机验证码 -----
+select rpad(round(rand()*1000000, 0), 6, '0');	-- 当rand()生成0.01989...可以通过补0达到六位数
+```
+
+#### 日期函数
+
+常见的日期函数如下：
+
+| 函数                                   | 功能                                                                                                                                      |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `CURDATE()`                          | 返回当前日期                                                                                                                              |
+| `CURTIME()`                          | 返回当前时间                                                                                                                              |
+| `NOW()`                              | 返回当前日期和时间                                                                                                                        |
+| `TEAR(date)`                         | 获取指定date的年份                                                                                                                        |
+| `MONTH(date)`                        | 获取指定date的月份                                                                                                                        |
+| `DAY(date)`                          | 获取指定date的日期                                                                                                                        |
+| `DATE_ADD(date, INTERVAL expr type)` | 返回一个日期/时间值加上一个时间间隔 `expr`后的时间值<br />`INTERVAL`为固定写法<br />`TYPE`为日期单位，如 `DAY`,`MONTH`,`YEAR` |
+| `DATEDIFF(date1, date2)`             | 返回起始时间date1和结束时间date2之间的天数                                                                                                |
+
+```MySQL
+----- 日期函数 -----
+-- curdate
+select curdate();	-- 2023-09-24
+-- curtime
+select curtime();	-- 22:36:37
+-- now
+select now();		-- 2023-09-24 22:36:55
+-- year(), month(), day()
+select year(now());	-- 2023
+select month(now());	-- 09
+select day(now());	-- 24
+-- DATE_ADD(date, INTERVAL expr TYPE)
+select date_add(now(), INTERVAL 70 YEAR);	-- 2073-09-24 22:39:40	往后推70年
+-- DATEDIFF(date1, date2)
+select datediff('2021-12-01', '2021-10-01');	-- 61	第一个时间减去第二个时间
+```
+
+```MySQL
+----- 查询所有员工的入职天数，并根据入职天数倒序排序 -----
+select name, datediff(curdate(), entryDate) as 'entrydays' from emp order by entrydays desc;
+```
+
+#### 流程函数
+
+流程函数也是常用的一类函数，可以在SQL语句中实现条件筛选，从而提高语句的效率。
+
+| 函数                                                          | 功能                                                     |
+| ------------------------------------------------------------- | -------------------------------------------------------- |
+| `IF(value, t, f)`                                           | 如果value为true，则返回t，否则返回f                      |
+| `IFNULL(value1, value2)`                                    | 如果value1不为空，返回value1，否则返回value2             |
+| `CASE WHEN [val1] THEN [res1] ...ELSE [default] END`        | 如果val1为true，返回res1，...否则返回default默认值       |
+| `CASE [expr] WHEN [val1] THEN [res1] ...ELSE [default] END` | 如果expr的值等于val1，返回res1，...否则返回default默认值 |
+
+```MySQL
+----- 流程返回函数 -----
+-- if
+select if(false, 'OK', 'Error');	-- Error
+-- ifnull
+select ifnull('OK', 'Default');		-- OK
+select ifnull('', 'Default');	-- '' 空字符串
+select ifnull(null, 'Default');		-- Default
+-- case when then else
+-- 需求：查询emp表的员工姓名和工作地址（北京/上海 ---> 一线城市，其他 ---> 二线城市）
+select
+	name,
+	(case workAddress when '北京' then '一线城市' when '上海' then '一线城市' else '二线城市' end) as '工作地址'
+from emp;
+
+-- 案例：统计班级各个学员的成绩，展示的规则如下：
+-- >= 85，展示优秀
+-- >= 60，展示及格
+-- 否则，展示不合格
+create table student(
+	id int comment '学号',
+	name varchar(10) comment '姓名',
+	score tinyint unsigned comment '总分'
+) comment '学生表';
+
+insert into student values
+	(1, '张三', 59),
+	(2, '李华', 86),
+	(3, '小明', 77),
+	(4, '小美', 80);
+
+select
+	id,
+	name,
+	(case when score >= 85 when '优秀' when score >= 60 then '及格' else '不及格' end) as '成绩'
+from student;
+
+```
+
+#### 总结
+
+1. 字符串函数
+   - `CONCAT LOWER UPPER LPAD RPAD TRIM SUBSTRING`
+2. 数值函数
+   - `CEIL FLOOR MOD RADN ROUND`
+3. 日期函数
+   - `CURDATE CURTIME NOW YEAR MONTH DAY DATE_ADD DATEDIFF`
+4. 流程函数
+   - `IF; IFNULL; CASE [...] WHEN ... THEN ... ELSE ... END;`
+
+### 约束
+
+#### 概述
+
+1. 概念：约束是作用于表中字段上的规则，用于限制存储在表中的数据
+2. 目的：保证数据库中数据的正确性、有效性和完整性。
+3. 分类：
+
+| 约束                     | 描述                                               | 关键字          |
+| ------------------------ | -------------------------------------------------- | --------------- |
+| 非空约束                 | 限制该字段的数据不能为 `null`                    | `NOT NULL`    |
+| 唯一约束                 | 保证该字段的所有数据都是唯一、不重复的             | `UNIQUE`      |
+| 主键约束                 | **主键是一行数据的唯一标识，要求非空且唯一** | `PRIMARY KEY` |
+| 默认约束                 | 保存数据时，如果未指定该字段的值，则采用默认值     | `DEFAULT`     |
+| 检查约束(8.0.16版本之后) | 保证该字段值满足某一条件                           | `CHECK`       |
+| 外键约束                 | 用来让两张表之间建立连接，保证数据的一致性和完整性 | `FOREIGN KEY` |
+
+> 注意：约束时作用于表中字段上的，可以在创建表/修改表的时候添加约束。
+
+#### 约束演示
+
+案例：根据需求，完成表结构的创建
+
+| 字段名     | 字段含义   | 字段类型        | 约束条件                  | 约束关键字                        |
+| ---------- | ---------- | --------------- | ------------------------- | --------------------------------- |
+| `id`     | ID唯一标识 | `int`         | 主键，并且自动增长        | `PRIMARY KEY    AUTO_INCREMENT` |
+| `name`   | 姓名       | `varchar(10)` | 不为空，并且唯一          | `NOT NULL    UNIQUE`            |
+| `age`    | 年龄       | `int`         | 大于0，并且小于等于120    | `CHECK`                         |
+| `status` | 状态       | `char(1)`     | 如果没有指定该值，默认为1 | `DEFAULT`                       |
+| `gender` | 性别       | `char(1)`     | 无                        |                                   |
+
+```MySQL
+----- 约束展示 -----
+create table user(
+	id int primary key auto_increment comment 'ID唯一标识',
+	name varchar(10) not null unique comment '姓名',
+	age int check(age > 0 and age <= 120) comment '年龄',
+	status char(1) default '1' comment '状态',
+	gender char(1) comment '性别'
+) comment '用户表';
+
+-- 插入数据
+insert into user (name, age, status, gender) values ('Tom1', 19, '1', '男'), ('Tom2', 25, '0', '男');
+insert into user (name, age, status, gender) values ('Tom3', 20, '0', '男');
+
+```
+
+#### 外键约束
+
+- 概念
+  - 外键是用来让两张表的数据之间建立连接，从而保证数据的一致性和完整性
+
+![1695624366218](image/1695624366218.png)
+
+> 注意：目前上述两张表，在数据库层面，并未建立外键关联，所以时无法保证数据的一致性和完整性的。
+
+```MySQL
+----- 约束（外键） -----
+-- 准备数据
+create table dept(
+	id int auto_increment comment 'ID' primary key,
+	name varchar(50) not null comment '部门名称'
+);
+
+INSERT INTO dept (id, name) VALUES (1, '研发部'), (2, '市场部'), (3, '财务部'), (4, '销售部'), (5, '总经办');
+
+create table emp(
+	id int auto_increment comment 'ID' primary key,
+	name varchar(50) not null comment '姓名',
+	age int comment '年龄',
+	job varchar(20) comment '职位',
+	salary int comment '薪资',
+	entrydate date comment '入职时间',
+	managerid int comment '直属领导ID',
+	dept_id int comment '部门ID'
+) comment '员工表';
+
+INSERT INTO emp (id, name, age, job, salary, entrydate, managerid, dept_id) VALUES
+	(1, '金庸', 66, '总裁', 20000, '2000-01-01', null, 5), (2, '张无忌', 20, '项目经理', 12500, '2005-12-05', 1, 1),
+	(3, '杨逍', 33, '开发', 8400, '2000-11-03', 2, 1), (4, '韦一笑', 48, '开发', 11000, '2002-02-05', 2, 1),
+	(5, '常遇春', 43, '开发', 10500, '2004-09-07', 3, 1), (6, '小昭', 19, '程序员鼓励师', 6600, '2004-10-12', 2, 1);
+```
+
+- 语法
+  - 添加外键
+
+```MySQL
+-- 1.在创建表时
+CREATE 表名(
+	字段名 数据类型,
+	...
+	[CONSRRAINT] [外键名称] FOREIGN KEY (外键字段名) REFERENCES 主表(主表列名)
+);
+
+-- 2.在创建表后
+ALTER TABLE 表名 ADD CONSTRAINT 外键名称 FOREIGN KEY (外键字段名) REFERENCES 主表(主表列名);
+```
+
+- 删除外键
+  `ALTER TABLE 表名 DROP FOREIGN KEY 外键名称;`
+
+```MySQL
+-- 添加外键
+alter table emp add constraint fk_emp_dept_id foreign key (dept_id) references dept(id);
+
+-- 删除外键
+alter table emp drop foreign key fk_emp_dept_id;
+```
+
+- 删除/更新行为
+
+| 行为            | 说明                                                                                                                                |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `NO ACTION`   | 当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，如果有则不允许删除/更新。(与 `RESTRICT`一致)                         |
+| `RESTRICT`    | 当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，**如果有则不允许删除/更新**。(与 `NO ACTION`一致)              |
+| `CASCADE`     | 当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，如果有，则也删除/更新外键在子表中的记录。                              |
+| `SET NULL`    | 当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，如果有则设置子表中该外键值为 `null`(这就要求该外键允许取 `null`)。 |
+| `SET DEFAULT` | 父表有变更时，子表将外键列设置称一个默认的值(`Innodb`不支持)                                                                      |
+
+```MySQL
+-- 删除/更新行为
+ALTER TABLE 表名 ADD CONSTRAINT 外键名称 FOREIGN KEY (外键字段) REFERENCES 主表名(主表字段名) ON UPDATE CASCADE ON DELETE CASCADE;
+
+alter table emp add constraint fk_emp_dept_id foreign key (dept_id) references dept(id) on update set null on delete set null;
+```
+
+#### 总结
+
+1. 非空约束：`NOT NULL`
+2. 唯一约束：`UNIQUE`
+3. 主键约束：`PRIMARY KEY` (自增：`AUTO_INCREMENT`)
+4. 默认约束：`DEFAULT`
+5. 检查约束：`CHECK`
+6. 外键约束：`FOREIGN KEY`
+
+### 多表查询
+
+#### 多表关系
+
+- 概述
+
+项目开发中，在进行数据库表结构设计时，会根据业务需求及业务模块之间的关系，分析并设计表结构，由于业务之间相互关联，所以各个表结构之间也存在着各种联系，基本上分为三种：
+
+| 一对多（多对一） | 多对多 | 一对一 |
+| ---------------- | ------ | ------ |
+
+- **一对多（多对一）**
+
+> 案例：部门与员工的关系
+>
+> 关系：一个部门对应多个员工，一个员工对应一个部门
+>
+> 实现：**在多的一方建立外键，指向一的一方的主键**
+
+![1695628271442](image/1695628271442.png)
+
+- **多对多**
+
+> 案例：学生 与 课程的关系
+>
+> 关系：一个学生可以选修多门课程，一门课程也可以供多个学生选择
+>
+> 实现：**建立第三张中间表，中间表至少包含两个外键，分别关联两方主键**
+
+![1695628347135](image/1695628347135.png)
+
+> 右键 `student_course`->`Diagrams`->`Show Diagram...`可视化多表关系
+
+![1695629373126](image/1695629373126.png)
+
+- 一对一
+
+> 案例：用户 与 用户 详情的关系
+>
+> 关系：一对一关系，多用于单表拆分，将一张表的基础字段放在一张表中，其他详情字段放在另一张表中，以提升操作效率。
+>
+> 实现：**在任意一方加入外键，关联另外一方的主键，并设置外键为唯一的(`UNIQUE`)**
+
+| ![1695629531351](image/1695629531351.png) |
+| --------------------------------------- |
+| ![1695629607099](image/1695629607099.png) |
+
+```MySQL
+-- 一对一
+create table tb_user(
+    id int auto_increment primary key comment '主键ID',
+    name varchar(10) comment '姓名',
+    age int comment '年龄',
+    gender char(1) comment '1：男，2：女',
+    phone char(11) comment '手机号'
+) comment '用户基本信息表';
+
+create table tb_user_edu(
+    id int auto_increment primary key comment '主键ID',
+    degree varchar(20) comment '学历',
+    major varchar(50) comment '专业',
+    primarySchool varchar(50) comment '小学',
+    middleSchool varchar(50) comment '中学',
+    university varchar(50) comment '大学',
+    userId int unique comment '用户ID',
+    constraint fk_userid foreign key (userId) references tb_user(id)
+) comment '用户教育信息表';
+
+insert into tb_user (id, name, age, gender, phone) values
+    (null, '黄渤', 45, '1', '12356684226'),
+    (null, '冰冰', 30, '2', '14452236885'),
+    (null, '码云', 55, '1', '16577702225'),
+    (null, '李彦宏', 58, '1', '17795532556')
+;
+
+insert into tb_user_edu (id, degree, major, primarySchool, middleSchool, university, userId) values
+    (null, '本科', '舞蹈', '静安区第一小学', '静安区第一中学', '北京舞蹈大学', 1),
+    (null, '本科', '舞蹈', '静安区第一小学', '静安区第一中学', '北京舞蹈大学', 2),
+    (null, '本科', '舞蹈', '静安区第一小学', '静安区第一中学', '北京舞蹈大学', 3),
+    (null, '本科', '舞蹈', '静安区第一小学', '静安区第一中学', '北京舞蹈大学', 4);
+```
+
+#### 多表查询概述
+
+- 概述：指从多张表中查询数据
+- 笛卡尔积：笛卡尔乘积是指在数学上，两个集合A集合和B集合的所有组合情况。(在多表查询时，需要消除无效的笛卡尔积)
+
+![1695638571020](image/1695638571020.png)
+
+```MySQL
+-- 多表查询 --
+select * from emp, dept;	-- 产生笛卡尔积，包含无效查询
+select * from emp, dept where dept_id = dept.id;
+```
+
+- 多表查询分类
+  - 连接查询
+    - 内连接：相当于查询A、B交集部分数据
+    - 外连接：
+      - 左外连接：查询**左表**所有数据，包含两张表交集部分数据
+      - 右外连接：查询**右表**所有数据，包含两张表交集部分数据
+    - 自连接：当前表与自身的连接查询，**自连接必须使用表别名**
+  - 子查询
+  - ![1695638993351](image/1695638993351.png)
+
+#### 内连接
+
+**内连接查询的是两张表交集的部分**
+
+内连接查询语法：
+
+- 隐式内连接
+
+```MySQL
+SELECT 字段列表 FROM 表1, 表2 WHERE 条件...;
+```
+
+- 显式内连接
+
+```MySQL
+SELECT 字段列表 FROM 表1 [INNER] JOIN 表2 ON 连接条件...;
+```
+
+```MySQL
+-- 内连接演示
+-- 1.查询每一个员工的姓名，及关联的部门的名称（隐式内连接完成）
+-- 表结构：emp, dept
+-- 连接条件：emp.dept_id = dept.id
+select e.name, d.name from emp e, dept d where e.dept_id = d.id;    -- 取别名后，必须使用别名获取字段
+
+-- 2.查询每一个员工的姓名，及关联的部门的名称（显式内连接完成）
+select emp.name, dept.name from emp inner join dept where emp.dept_id = dept.id;    -- 也可以同上进行取别名
+
+```
+
+#### 外连接
+
+外连接查询语法：
+
+- 左外连接
+
+```MySQL
+SELECT 字段列表 FROM LEFT [OUTER] JOIN 表2 ON 条件...;
+```
+
+> 相当于查询表1(左表)的所有数据 包含 表1和表2交集部分的数据
+
+- 右外连接
+
+```MySQL
+SELECT 字段列表 FROM RIGHT [OUTER] JOIN 表2 ON 条件...;
+```
+
+> 相当于查询表2(右表)的所有数据 包含 表1和表2交集部分的数据
+
+```MySQL
+-- ----- 外连接演示 ----- --
+-- 1.查询emp表的所有数据，和对应的部门信息（左外连接）
+-- 表结构：emp，dept
+select emp.*, dept.name from emp left outer join dept on emp.dept_id = dept.id;
+
+-- 2.查询dept表的所有数据，和对应的员工信息（右外连接）
+select d.*, e.* from emp e right outer join dept d on e.dept_id = d.id;
+
+select d.*, e.* from dept d left outer join emp e on d.id = e.dept_id;  -- 与上添加
+```
+
+`p41`
+
+#### 自连接
+
+#### 子查询
+
+#### 多表查询案例
+
+4
+
+### 事务
+
+5
+
 ## 进阶篇
 
 - 存储引擎
