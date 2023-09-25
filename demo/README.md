@@ -39,13 +39,13 @@ UPDATE student SET name = '张三丰' WHERE id = 8;
 
 ## 2. 结果展示
 
-![1695433795153](image/README/1695433795153.png)
+![1695433795153](image/1695433795153.png)
 
 | 操作                                           | 结果                                           |
 | ---------------------------------------------- | ---------------------------------------------- |
-| ![1695433775284](image/README/1695433775284.png) | ![1695433782892](image/README/1695433782892.png) |
-| ![1695433245209](image/README/1695433245209.png) | ![1695433906916](image/README/1695433906916.png) |
-| ![img](image/README/1695433297296.png)           | ![1695433891635](image/README/1695433891635.png) |
+| ![1695433775284](image/1695433775284.png) | ![1695433782892](image/1695433782892.png) |
+| ![1695433245209](image/1695433245209.png) | ![1695433906916](image/1695433906916.png) |
+| ![img](image/1695433297296.png)           | ![1695433891635](image/1695433891635.png) |
 
 ## 3. 使用C++连接数据库
 
@@ -198,22 +198,6 @@ void StudentManager::showMenu()
 #include "StudengtManager.h"
 int main()
 {
-
-	// Student stu1{10, "小昭", "03班"};
-	// StudentManager::GetInstance()->updateStu(stu1);	// 修改指定id数据
-
-	// Student stu2{ 11, "韩信", "04班" };
-	// // StudentManager::GetInstance()->insertStu(stu2);	// 插入数据，id不能重复
-
-	// StudentManager::GetInstance()->deleteStu(stu2.Id);	// 根据id，删除数据
-
-	// // 查询
-	// auto res = StudentManager::GetInstance()->selectStu();
-	// for (const auto& s : res) {
-	// 	cout << "学号：" << s.Id << " 姓名：" << s.Name
-	// 		<< " 班级：" << s.Class << endl;
-	// }
-
 	auto StuManager = StudentManager::GetInstance();
 	vector<Student> res;	// 查询结果
 	Student stu;			// 一个Student对象
