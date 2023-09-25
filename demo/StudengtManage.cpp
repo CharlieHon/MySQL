@@ -58,11 +58,11 @@ bool StudentManager::deleteStu(const int &id)
 	return true;
 }
 
-vector<Student> StudentManager::selectStu(const string& condition)
+vector<Student> StudentManager::selectStu(const string& condition, const string& limit)
 {
 	vector<Student> stuList;
 	char sql[1024];
-	sprintf_s(sql, "select * from %s %s", table_name, condition.c_str());
+	sprintf_s(sql, "select * from %s %s %s", table_name, condition.c_str(), limit.c_str());
 
 	if (mysql_query(con, sql)) {
 		fprintf(stderr, "Failed to select data: Error: %s\n",
@@ -81,4 +81,17 @@ vector<Student> StudentManager::selectStu(const string& condition)
 	}
 
 	return stuList;
+}
+
+void StudentManager::showMenu()
+{
+	cout << "***************************" << endl;
+	cout << "*****使用C++连接MySQL******" << endl;
+	cout << "****** 1.查询所有数据 *****" << endl;
+	cout << "****** 2.修改数据   *******" << endl;
+	cout << "****** 3.插入数据   *******" << endl;
+	cout << "****** 4.删除数据   *******" << endl;
+	cout << "****** 0.退出程序  *******" << endl;
+	cout << "**************************" << endl;
+	cout << endl;
 }

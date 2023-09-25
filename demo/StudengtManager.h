@@ -24,7 +24,8 @@ public:
 	bool insertStu(const Student&);	// 插入
 	bool updateStu(const Student&);	// 修改
 	bool deleteStu(const int&);		// 删除
-	vector<Student> selectStu(const string& = "");		// 查找
+	vector<Student> selectStu(const string& = "", const string &limit="");		// 查找
+	void showMenu();	// 显示菜单
 private:
 	MYSQL* con;
 	const char* host = "127.0.0.1";	// IP地址
