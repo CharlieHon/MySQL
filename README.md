@@ -1294,7 +1294,7 @@ SELECT 字段列表 FROM 表1 [INNER] JOIN 表2 ON 连接条件...;
 select e.name, d.name from emp e, dept d where e.dept_id = d.id;    -- 取别名后，必须使用别名获取字段
 
 -- 2.查询每一个员工的姓名，及关联的部门的名称（显式内连接完成）
-select emp.name, dept.name from emp inner join dept where emp.dept_id = dept.id;    -- 也可以同上进行取别名
+select emp.name, dept.name from emp inner join dept on emp.dept_id = dept.id;    -- 也可以同上进行取别名
 
 ```
 
@@ -1305,7 +1305,7 @@ select emp.name, dept.name from emp inner join dept where emp.dept_id = dept.id;
 - 左外连接
 
 ```MySQL
-SELECT 字段列表 FROM LEFT [OUTER] JOIN 表2 ON 条件...;
+SELECT 字段列表 FROM 表1 LEFT [OUTER] JOIN 表2 ON 条件...;
 ```
 
 > 相当于查询表1(左表)的所有数据 包含 表1和表2交集部分的数据
@@ -1313,7 +1313,7 @@ SELECT 字段列表 FROM LEFT [OUTER] JOIN 表2 ON 条件...;
 - 右外连接
 
 ```MySQL
-SELECT 字段列表 FROM RIGHT [OUTER] JOIN 表2 ON 条件...;
+SELECT 字段列表 FROM 表1 RIGHT [OUTER] JOIN 表2 ON 条件...;
 ```
 
 > 相当于查询表2(右表)的所有数据 包含 表1和表2交集部分的数据
@@ -1330,13 +1330,169 @@ select d.*, e.* from emp e right outer join dept d on e.dept_id = d.id;
 select d.*, e.* from dept d left outer join emp e on d.id = e.dept_id;  -- 与上添加
 ```
 
-`p41`
-
 #### 自连接
+
+自连接查询语法：
+
+```MySQL
+SELECT 字段列表 FROM 表A 别名A JOIN 表A 别名B ON 条件 ..;
+```
+
+> **自连接查询，可以是内连接查询，也可以是外连接查询。**
+
+```MySQL
+-- 自连接
+-- 1.查询员工 及其 所属领导的姓名
+-- 表结构：emp 将emp表看成两张表a, b
+select a.name, b.name from emp a, emp b where a.managerId = b.id;   -- 使用内连接，查询交集内容
+select a.name, b.name from emp a inner join emp b on a.managerId = b.id;    -- 与上等价
+
+-- 2.查询所有员工 emp 及其领导的名字 emp，如果员工没有领导，也需要查询出来
+select a.name, b.name from emp a left outer join emp b on a.managerId = b.id;   -- 使用外连接，查询所有内容
+```
+
+#### 联合查询-union, union all
+
+对于 `union`查询，就是把多次查询的结果合并起来，形成一个新的查询结果集。
+
+```MySQL
+SELECT 字段列表 FROM 表A ...
+UNION [ALL]
+SELECT 字段列表 FROM 表B ...;
+```
+
+```MySQL
+-- union all, union
+-- 1.将 薪资低于5000 的员工，和 年龄大于50岁 的员工全部查询出来
+select * from emp where salary < 5000
+union all
+select * from emp where age > 50;
+
+-- 去除重复值
+select * from emp where salary < 5000
+union
+select * from emp where age > 50;
+```
+
+> **对于联合查询的多张表的列数必须保持一致，字段类型也必须保持一致。**
+>
+> `union all`会将全部的数据直接合并在一起，`union`会对合并之后的数据去重。
 
 #### 子查询
 
+- 概念：SQL语句中嵌套SELECT语句，称为**嵌套查询**，又称**子查询**
+
+```MySQL
+SELECT * FROM t1 WHERE column1 = (SELECT column1 FROM t2);
+```
+
+> 子查询外部的语句可以是 `INSERT/UPDATE/DELETE/SELECT`的任何一个
+
+- 根据子查询结果不同，分为：
+  - 标量子查询（子查询结果为单个值）
+  - 列子查询（子查询结果为一列）
+  - 行子查询（子查询结果为一行）
+  - 表子查询（子查询结果为多行多列）
+- 根据子查询位置，分为 `WHERE`之后，`FROM`之后，`SELECT`之后
+
+
+- 标量子查询
+  - 子查询返回的结果是单个值（数字、字符串、日期等），最简单的形式，这种子查询称为**标量子查询**
+  - 常用的操作符：`= <> > >= < <=`
+
+```MySQL
+-- ----- 子查询 ----- --
+-- 1.查询“销售部”的所有员工信息
+-- a.查询”销售部“的部门ID
+select id from dept where name = "销售部"; -- 4
+
+-- b.根据”销售部“部门ID，查询员工信息
+select * from emp where dept_id = (select id from dept where name = "销售部");
+
+-- 2.查询在“赵敏”入职之后的员工信息
+-- a.查询“赵敏”的入职日期
+select entryDate from emp where name = "赵敏";    -- 2004-12-20
+
+-- b.查询指定入职日期之后的员工信息
+select * from emp where entryDate > (select entryDate from emp where name = "赵敏");
+
+```
+
+- 列子查询
+  - 子查询的结果是一列（可以是多行），这种子查询称为列子查询
+  - 常用的操作符：`IN, NOT IN, ANY, SOME, ALL`
+
+| 操作符     | 描述                                                  |
+| ---------- | ----------------------------------------------------- |
+| `IN`     | 在指定的集合范围之内，多选一                          |
+| `NOT IN` | 不在指定的集合范围之内                                |
+| `ANY`    | 子查询返回列表中，有任意一个满足即可                  |
+| `SOME`   | 与 `ANY`等同，使用 `SOME`的地方都可以使用 `ANY` |
+| `ALL`    | 子查询返回列表的所有值都必须满足                      |
+
+```MySQL
+-- ----- 列子查询 ----- --
+-- 1.查询“销售部”和“市场部”的所有员工信息
+-- a.查询“销售部”和“市场部”的部门ID
+select id from dept where name = "市场部" or name = "销售部";
+-- b.根据部门ID，查询员工信息
+select * from emp where emp.dept_id in (select id from dept where name = "市场部" or name = "销售部");
+
+
+-- 2.查询比财务部所有人工资都高的员工信息
+-- a.查询财务部的所有员工工资
+select id from dept where name = "财务部";
+select salary from emp where dept_id = (select id from dept where name = "财务部");    -- 财务部所有人员工资
+-- b.比财务部所有人工资都高的员工信息
+select * from emp where salary > all (select salary from emp where dept_id = (select id from dept where name = "财务部"));
+
+
+-- 3.查询比研发部其中任意一人工资高的员工信息
+select * from emp where salary > any (select salary from emp where dept_id = (select id from dept where name = "研发部"));
+```
+
+- 行子查询
+  - 子查询返回的结果是一行（可以是多列），这种子查询称为行子查询
+  - 常用的操作负：`=, <>, IN, NOT IN`
+
+```MySQL
+-- ----- 行子查询 ----- --
+-- 1.查询与“张无忌”的薪资及直属领导相同的员工信息
+-- a.查询张无忌的薪资及直属领导
+select salary, managerId from emp where name = "张无忌";
+-- b.查询员工
+select * from emp where (salary, managerId) = (select salary, managerId from emp where name = "张无忌");
+
+```
+
+- 表子查询
+  - 子查询返回的结果是多行多列，这种子查询称为表子查询
+  - 常用的操作符：`IN`
+
+```MySQL
+-- ---- 表子查询 ----- --
+-- 1.查询与“鹿杖客”、“宋远桥”的职位和薪资相同的员工信息
+-- a.查询“鹿杖客”、“宋远桥”的职位和薪资
+select job, salary from emp where name = "鹿杖客" or name = "宋远桥";
+-- 查询的条件是多行数据，所以用 IN
+select * from emp where (job, salary) in (select job, salary from emp where name = "鹿杖客" or name = "宋远桥");
+
+-- 2.查询入职日期是“2006-01-01”之后的员工信息，及其部门信息
+-- a.查询员工信息
+select * from emp where entryDate > "2006-01-01";
+-- b.对应部门信息 因为要保留所有信息，所以采用外连接
+select e.*, d.* from (select * from emp where entryDate > "2006-01-01") e left join dept d on e.dept_id = d.id;
+```
+
 #### 多表查询案例
+
+![1695907942670](image/1695907942670.png)
+
+```MySQL
+
+```
+
+
 
 4
 
