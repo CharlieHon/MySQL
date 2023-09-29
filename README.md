@@ -1389,14 +1389,14 @@ SELECT * FROM t1 WHERE column1 = (SELECT column1 FROM t2);
 > 子查询外部的语句可以是 `INSERT/UPDATE/DELETE/SELECT`的任何一个
 
 - 根据子查询结果不同，分为：
+
   - 标量子查询（子查询结果为单个值）
   - 列子查询（子查询结果为一列）
   - 行子查询（子查询结果为一行）
   - 表子查询（子查询结果为多行多列）
 - 根据子查询位置，分为 `WHERE`之后，`FROM`之后，`SELECT`之后
-
-
 - 标量子查询
+
   - 子查询返回的结果是单个值（数字、字符串、日期等），最简单的形式，这种子查询称为**标量子查询**
   - 常用的操作符：`= <> > >= < <=`
 
@@ -1489,16 +1489,267 @@ select e.*, d.* from (select * from emp where entryDate > "2006-01-01") e left j
 ![1695907942670](image/1695907942670.png)
 
 ```MySQL
+-- ----- 多表查询案例 ----- --
+-- 0.创建薪资表
+create table salgrade
+(
+    grade int,
+    losal int,
+    hisal int
+) comment "薪资表";
+insert into salgrade
+values (1, 0, 3000),
+       (2, 3001, 5000),
+       (3, 5001, 8000),
+       (4, 8001, 10000),
+       (5, 10001, 15000),
+       (6, 15001, 20000),
+       (7, 20001, 25000),
+       (8, 25001, 30000);
 
+-- 1.查询员工的姓名、年龄、职位、部门信息
+-- select e.name, e.age, e.job, d.name from (select name, age, job, managerId from emp) e left join dept d on e.managerId = d.id;
+select e.name, e.age, e.job, d.name
+from emp e,
+     dept d
+where e.dept_id = d.id;
+
+-- 2.查询年龄小于30岁的员工姓名、年龄、职位、部门信息（显式内连接）
+-- select e.name, e.age, e.job, d.name from (select name, age, job, managerId from emp where age < 30) e left join dept d on e.managerId = d.id;
+select e.name, e.age, e.job, d.name
+from emp e
+         inner join dept d on e.dept_id = d.id
+where age < 30;
+
+-- 3.查询拥有员工的部门ID、部门名称
+select distinct d.id, d.name
+from dept d
+         inner join emp e
+where d.id = e.dept_id;
+-- distinct 去重！！！
+
+-- 4.查询所有年龄大于40岁的员工，及其归属的部门名称；如果员工没有分配部门，也需要展示出来
+select e.*, d.name
+from emp e
+         left outer join dept d on e.dept_id = d.id
+where e.age > 40;
+
+-- 5.查询所有员工的工资等级
+-- 表：emp salgrade
+-- 连接田间：emp.salary >= salgrade.losal and emp.salary <= salgrade.hisal;
+select e.*, s.grade
+from emp e,
+     salgrade s
+where e.salary >= s.losal
+  and e.salary <= s.hisal;
+select e.*, s.grade
+from emp e,
+     salgrade s
+where e.salary between s.losal and s.hisal;
+-- 同上
+
+-- 6.查询“研发部”所有员工的信息及工资等级
+-- select e.*, s.grade from emp e, salgrade s where e.dept_id = (select id from dept d where d.name = "研发部") and e.salary between s.losal and s.hisal;
+-- 连接n张表，至少需要n-1个条件
+select e.*, s.grade
+from emp e,
+     dept d,
+     salgrade s
+where e.dept_id = d.id
+  and (e.salary between s.losal and s.hisal)
+  and d.name = "研发部";
+
+-- 7.查询“研发部”员工的平均工资
+select d.name, avg(e.salary) from emp e, dept d where e.dept_id = d.id and d.name = "研发部";
+
+-- 8.查询工资比“灭绝”高的员工信息
+select * from emp e where e.salary > (select salary from emp e2 where e2.name = "灭绝");
+
+-- 9.查询比平均薪资高的员工信息
+select * from emp e where e.salary > (select avg(salary) from emp);
+
+-- 10.查询低于本部门平均工资的员工信息
+-- a.查询本部门平均工资
+select * from emp e1 where e1.dept_id = 1;
+-- b.查询低于本部门平均工资低的员工信息
+select e2.* from emp e2 where e2.salary < (select avg(e1.salary) from emp e1 where e1.dept_id= e2.dept_id);
+
+-- 11.查询所有的部门信息，并统计部门的员工人数
+select d.id, d.name, (select count(*) from emp e where e.dept_id = d.id) "员工人数" from dept d;
+
+-- 12.查询所有学生的选课情况，展示出学生名称，学号，课程名称
+-- 表：student、course、studentCourse
+-- 连接条件：student.id = student_course.studentId and course.id = student_course.courseId
+select s.name, s.no, c.name from student s, course c, student_course sc where s.id = sc.studentId and c.id = sc.courseID;
 ```
 
+#### 总结
 
+1. 多表关系
 
-4
+> 一对多：**在多的一方设置外键，关联一的一方的主键**
+>
+> 多对多：**建立中间表，中间表包含两个外键，关联两张表的主键**
+>
+> 一对一：**用于表结构拆分，在其中任何一方设置外键 `UNIQUE`，关联另一方的主键**
+
+2. 多表查询
+
+```MySQL
+内连接：
+	隐式：SELECT ... FROM 表A, 表B WHERE 条件...
+	显式：SELECT ... FROM 表A，表B WHERE 条件...
+外连接：
+	左外：SELECT ... FROM 表A LEFT JOIN 表B ON 条件...
+	右外：SELECT ... FROM 表A RIGHT JOIN 表B ON 条件...
+自连接：SELECT ... FROM 表A 别名1, 表A 别名2 WHERE 条件...
+子查询：标量子查询，列子查询，行子查询，表子查询
+```
 
 ### 事务
 
-5
+#### 事务简介
+
+- **事务**是一组操作的集合，它是不可分割的工作单位，事务会把所有的操作作为一个整体一起向系统提交或撤销操作请求，即这些操作**要么同时成功，要么同时失败**。
+- 默认 `MySQL`的事务是自动提交的，也就是说，当执行一条DML语句，MySQL会立即隐式地提交事务。
+
+#### 事务操作
+
+- 查看/设置事务提交方式
+
+```MySQL
+SELECT @@autocommit;	-- 0：手动提交；1：自动提交
+SET @@autocommit 0;	-- 设置为手动提交
+```
+
+- 提交事务
+
+```MySQL
+COMMIT;
+```
+
+- 回滚事务
+
+```MySQL
+ROLLBACK;
+```
+
+```MySQL
+-- ----- 事务操作 ----- --
+-- 数据准备
+create table account(
+    id int auto_increment primary key comment '主键ID',
+    name varchar(10) comment '姓名',
+    money int comment '金额'
+) comment '账户表';
+insert into account (id, name, money) values (null, '张三', 2000), (null, '李四', 2000);
+
+-- 恢复数据
+update account set money = 2000 where name = '张三' or name = '李四';
+
+select @@autocommit;
+set @@autocommit = 0;
+
+-- 转账操作（张三给李四转账10090元）
+-- 1.查询张三账余额
+select * from account where name = '张三';
+-- 2.将张三账户余额-1000
+update account set money = money - 1000 where name = '张三';
+程序执行报错
+-- 3.将李四账户余额+1000
+update account set money = money + 1000 where name = '李四';
+
+-- 提交事务
+commit;
+-- 回滚事务
+rollback;
+```
+
+- 开启事务
+
+```MySQL
+START TRANSACTION 或 BEGIN;
+```
+
+```MySQL
+-- 开启事务，默认不提交，报错时回滚事务
+start transaction;
+-- 1.查询张三账余额
+select * from account where name = '张三';
+-- 2.将张三账户余额-1000
+update account set money = money - 1000 where name = '张三';
+程序执行报错
+-- 3.将李四账户余额+1000
+update account set money = money + 1000 where name = '李四';
+-- 提交事务
+commit;
+-- 回滚事务
+rollback;
+```
+
+#### 事务四大特性(ACID)
+
+- **原子性**(Atomicity)：事务是不可分割地最小操作单元，要么全部成功，要么全部失败。
+- **一致性**(Consistency)：事务完成时，必须使所有数据都保持一致状态
+- **隔离性**(Isolation)：数据库系统提供的隔离机制，保证事务在不受外部并发操作影响的独立环境下运行。
+- **持久性**(Durability)：事务一旦提交或回滚，它对数据库中的数据的改变就是永久的。
+
+#### 并发事务问题
+
+| 问题                 | 描述                                                                                                             | 图片描述                                |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **脏读**       | 一个事务读到另外一个事务还没有提交的数据                                                                         | ![1695960533638](image/1695960533638.png) |
+| **不可重复读** | 一个事务先后读取同一条记录，但两次读取的数据不同，称之为不可重复读。                                             | ![1695960645124](image/1695960645124.png) |
+| **幻读**       | 一个事务按照条件查询数据时，没有对应的数据行，但是在插入数据时，<br />又发现这行数据已经存在，好像出现了“幻影” | ![1695960791886](image/1695960791886.png) |
+
+#### 事务隔离级别
+
+| 隔离级别                  | 脏读 | 不可重复读 | 幻读 |
+| ------------------------- | ---- | ---------- | ---- |
+| `Read uncommitted`      | √   | √         | √   |
+| `Read committed`        | ×   | √         | √   |
+| `Repeatable Read(默认)` | ×   | ×         | √   |
+| `Serializable`          | ×   | ×         | ×   |
+
+```MySQL
+-- 查看事务隔离级别
+SELECT @@TRANSACTION_ISOLATION
+
+-- 设置事务隔离级别
+SET [SESSION GLOBAL] TRANSACTION ISOLATION LEVEL [READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE]
+```
+
+> 注意：事务隔离级别越高，数据越安全，但是性能越低。
+
+#### 总结
+
+1. 事务简介
+
+> 事务是一组操作的集合，这组操作，要么全部执行成功，要么全部执行失败。
+
+2. 事务操作
+
+```MySQL
+START TRANSACTION;	-- 开启事务
+COMMIT/ROLLBACK;	-- 提交/回滚事务
+```
+
+3. 事务四大特性
+
+> 原子性(Atomicity)、一致性(Consistency)、隔离性(Isolation)、持久性(Durability)
+
+4. 并发事务问题
+
+> 脏读，不可重复读，幻读
+
+5. 事务隔离级别
+
+```MySQL
+READ UNCOMMITTED;
+READ COMMITTED;
+REPEATABLE READ;
+SERIALIZABLE;
+```
 
 ## 进阶篇
 
